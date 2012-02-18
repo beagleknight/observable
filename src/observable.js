@@ -1,38 +1,51 @@
 tddjs.namespace("util");
 
 (function() {
-  function Observable() {
-    this.observers = [];
+  function _observers(observable, event) {
+    if(!observable.observers) {
+      observable.observers = {};
+    }
+
+    if(!observable.observers[event]) {
+      observable.observers[event] = [];
+    }
+
+    return observable.observers[event];
   }
 
-  function addObserver(observer) {
+  function observe(event, observer) {
     if(typeof observer != "function") {
       throw new TypeError("observer is not a function");
     }
 
-    this.observers.push(observer);
+    _observers(this, event).push(observer);
   }
 
-  function hasObserver(observer) {
-    for(var i = 0, l = this.observers.length; i < l; i++) {
-      if(this.observers[i] == observer) {
+  function hasObserver(event, observer) {
+    var observers = _observers(this, event);
+
+    for(var i = 0, l = observers.length; i < l; i++) {
+      if(observers[i] == observer) {
         return true;
       }
     }
     return false;
   }
 
-  function notifyObservers() {
-    for(var i = 0, l = this.observers.length; i < l; i++) {
+  function notify(event) {
+    var observers = _observers(this, event);
+    var args = Array.prototype.slice.call(arguments, 1);
+
+    for(var i = 0, l = observers.length; i < l; i++) {
       try {
-        this.observers[i].apply(this, arguments);
+        observers[i].apply(this, args);
       } catch(e) { }
     }
   }
 
-  Observable.prototype.addObserver = addObserver;
-  Observable.prototype.hasObserver = hasObserver;
-  Observable.prototype.notifyObservers = notifyObservers;
-
-  tddjs.util.Observable = Observable;
+  tddjs.namespace("util").observable = {
+    observe: observe,
+    hasObserver: hasObserver,
+    notify: notify
+  };
 }());
